@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
+  Alert,
   TouchableWithoutFeedback,
 } from 'react-native';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
@@ -33,6 +34,7 @@ function Cart() {
   const [subtotal, setSubtotal] = useState(sub_total);
   const [cartTax, setCartTax] = useState(tax);
   const [cartTotal, setCartTotal] = useState(total);
+  const [totalWeight, setTotalWeight] = useState();
 
   useEffect(() => {
     const fetchCartData = async () => {
@@ -61,6 +63,7 @@ function Cart() {
               slug: key,
               isChecked: false,
               image: item.product.image,
+              weight: item.product.weight,
             }),
           );
 
@@ -68,6 +71,7 @@ function Cart() {
           setSubtotal(response.data.data.sub_total);
           setCartTax(response.data.data.tax.parsedRawValue);
           setCartTotal(response.data.data.total);
+          // console.log(response.data.data);
         } else {
           console.error('Invalid cart data response:', response.data);
         }
@@ -92,7 +96,19 @@ function Cart() {
       }
       return total;
     }, 0);
+
     setSubtotal(newSubtotal);
+  }, [cartItems]);
+
+  useEffect(() => {
+    const newTotalWeight = cartItems.reduce((total, item) => {
+      if (item.isChecked) {
+        return total + item.weight * item.quantity;
+      }
+      return total;
+    }, 0);
+
+    setTotalWeight(newTotalWeight);
   }, [cartItems]);
 
   const handleCheckboxPress = itemId => {
@@ -170,15 +186,37 @@ function Cart() {
 
   const handleGoToCheckout = async () => {
     const selectedItems = cartItems.filter(item => item.isChecked);
+    const totalWeight = selectedItems.reduce(
+      (total, item) => total + item.weight * item.quantity,
+      0,
+    );
+
+    if (selectedItems.length === 0) {
+      Alert.alert('Peringatan', 'Tidak ada barang yang dipilih');
+      return;
+    }
+
     try {
-      await AsyncStorage.setItem(
-        'selectedItems',
-        JSON.stringify(selectedItems),
-      );
+      const dataToStore = {
+        selectedItems,
+        totalWeight,
+      };
+      await AsyncStorage.setItem('checkoutData', JSON.stringify(dataToStore));
+      console.log('Hasil:', dataToStore);
       navigation.navigate('Checkout');
     } catch (error) {
-      console.error('Failed to save selected items:', error);
+      console.error('Gagal menyimpan data checkout:', error);
     }
+  };
+
+  const idr = amount => {
+    const formatter = new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    });
+
+    return formatter.format(amount);
   };
 
   return (
@@ -221,7 +259,7 @@ function Cart() {
                   <View style={styles.itemDetails}>
                     <Text style={styles.itemTitle}>{product.name}</Text>
                     <View style={styles.itemPriceContainer}>
-                      <Text style={styles.itemPrice}>{product.price}</Text>
+                      <Text style={styles.itemPrice}>{idr(product.price)}</Text>
                     </View>
                     <View style={styles.quantityContainer}>
                       <TouchableOpacity
@@ -281,7 +319,11 @@ function Cart() {
         <View style={styles.rect8}>
           <View style={styles.subtotalRow}>
             <Text style={styles.subtotal}>Subtotal :</Text>
-            <Text style={styles.price}>Rp. {subtotal}</Text>
+            <Text style={styles.price}>{idr(subtotal)}</Text>
+          </View>
+          <View style={styles.subtotalRow}>
+            <Text style={styles.weight}>Total Weight :</Text>
+            <Text style={styles.gram}>{totalWeight} gram</Text>
           </View>
           <TouchableOpacity style={styles.rect9} onPress={handleGoToCheckout}>
             <Text style={styles.checkout}>Checkout</Text>
@@ -471,7 +513,7 @@ const styles = StyleSheet.create({
   },
   rect8Stack: {
     width: 392,
-    height: 194,
+    height: 240,
   },
   rect8: {
     top: 0,
@@ -501,8 +543,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginTop: 10,
   },
+  weight: {
+    fontFamily: 'Poppins-Medium',
+    color: 'rgba(0, 0, 0, 1)',
+    fontSize: 18,
+    marginTop: 5,
+  },
+  gram: {
+    fontFamily: 'Poppins-Medium',
+    color: 'rgba(0, 0, 0, 1)',
+    fontSize: 18,
+    marginTop: 5,
+  },
   subtotalRow: {
-    height: 60,
+    height: 50,
     flexDirection: 'row',
     justifyContent: 'space-around',
   },

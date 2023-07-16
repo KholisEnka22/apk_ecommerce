@@ -19,7 +19,8 @@ function Login(props) {
 
   const handleLogin = async () => {
     try {
-      const setLogin = await login(email, password);
+      const credentials = {email, password};
+      const setLogin = await login(credentials);
       console.log(setLogin);
       if (setLogin == 'Login Sukses') {
         navigation.navigate('Dashboard');

@@ -25,7 +25,7 @@ function Navigasi(props) {
   };
 
   const getIconColor = tabName => {
-    return activeTab === tabName ? 'red' : 'white';
+    return activeTab === tabName ? 'white' : 'white';
   };
 
   return (

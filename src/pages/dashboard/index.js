@@ -13,11 +13,11 @@ import IoniconsIcon from 'react-native-vector-icons/Ionicons';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import Navigasi from '../assets/components/navigation';
 import axios from 'axios';
-import {AuthContext} from '../../context/AuthContext';
+import {useAuth} from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function Dashboard(props) {
-  const {token} = useContext(AuthContext);
+  const {token} = useAuth();
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
@@ -36,9 +36,20 @@ function Dashboard(props) {
       );
       setProducts(response.data.data);
       console.log(response.data.data);
+      console.log('Gatau:', token);
     } catch (error) {
       console.log('Failed to fetch products:', error);
     }
+  };
+
+  const idr = amount => {
+    const formatter = new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    });
+
+    return formatter.format(amount);
   };
 
   return (
@@ -126,7 +137,7 @@ function Dashboard(props) {
                 </View>
                 <View style={styles.textContainer}>
                   <Text style={styles.title}>{item.name}</Text>
-                  <Text style={styles.price}>{item.price}</Text>
+                  <Text style={styles.price}>{idr(item.price)}</Text>
                 </View>
               </View>
             ))
@@ -397,56 +408,3 @@ const styles = StyleSheet.create({
 });
 
 export default Dashboard;
-
-// import React, {useEffect, useState, useContext} from 'react';
-// import {View, Text, FlatList, Image} from 'react-native';
-// import axios from 'axios';
-// import {AuthContext} from '../../context/AuthContext';
-
-// const Dashboard = () => {
-//   const {token} = useContext(AuthContext);
-//   const [products, setProducts] = useState([]);
-
-//   useEffect(() => {
-//     fetchProducts();
-//   }, [token]);
-
-//   const fetchProducts = async () => {
-//     try {
-//       const response = await axios.get(
-//         'http://gosmart.candibinangun.id/api/product',
-//         {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         },
-//       );
-//       setProducts(response.data.data);
-//       console.log(response.data.data);
-//     } catch (error) {
-//       console.error(error);
-//     }
-//   };
-
-//   const renderItem = ({item}) => (
-//     <View style={{padding: 16}}>
-//       <Image source={{uri: item.image}} style={{width: 100, height: 100}} />
-//       <Text>{item.name}</Text>
-//       <Text>{item.price}</Text>
-//       <Text>{item.description}</Text>
-//     </View>
-//   );
-
-//   return (
-//     <View>
-//       <Text>HALLOOO</Text>
-//       <FlatList
-//         data={products} // Menggunakan properti data, bukan products
-//         renderItem={renderItem}
-//         keyExtractor={item => item.slug}
-//       />
-//     </View>
-//   );
-// };
-
-// export default Dashboard;
